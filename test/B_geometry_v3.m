@@ -3,79 +3,114 @@ clc;
 clear;
 close all;
 
-rows = 240;
-cols = 320;
+%% TEST 1: Actual binary mask
+load('binary_mask.mat');
+BW = logical(mask);
 
-%% TEST 1: STRAIGHT LINE
-
-BW = false(rows,cols);
-BW(:,158:162) = true;
-
-test_geometry(BW,'Straight Line');
-
-
-%% TEST 2: DIAGONAL LINE
-
-BW = false(rows,cols);
-
-for r = 1:rows
-    c = round(100 + 0.25*r);
-
-    BW(r,max(1,c-2):min(cols,c+2)) = true;
-end
-
-test_geometry(BW,'Diagonal Line');
-
-
-%% TEST 3: CURVED LINE
-
-BW = false(rows,cols);
-
-for r = 1:rows
-    c = round(160 + 0.002*(r-120)^2);
-
-    BW(r,max(1,c-2):min(cols,c+2)) = true;
-end
-
-test_geometry(BW,'Curved Line');
-
-
-%% TEST 4: LINE WITH LANDING CIRCLE
-
-BW = false(rows,cols);
-
-BW(:,158:162) = true;
-
-[xx,yy] = meshgrid(1:cols,1:rows);
-
-circle = (xx-230).^2 + (yy-60).^2 <= 15^2;
-
-BW(circle) = true;
-
-test_geometry(BW,'Line with Landing Circle');
-
-
-%% TEST FUNCTION
-
-function test_geometry(BW,name)
-
-[lateral,heading,corner,circle,offset,line] = ...
-    B_geometry_v3(BW);
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
 
 figure;
-
 imshow(BW);
+title('Test 1: Actual Binary Mask');
 
-title(name);
+disp('TEST 1: ACTUAL MASK');
+disp(['Lateral Error: ', num2str(lateral_error)]);
+disp(['Heading Error: ', num2str(heading_error)]);
+disp(['Corner Ahead: ', num2str(corner_ahead)]);
+disp(['Circle Found: ', num2str(circle_found)]);
+disp(['Circle Offset: ', num2str(circle_offset)]);
+disp(['Line Found: ', num2str(line_found)]);
 
-fprintf('\n%s\n',name);
 
-fprintf('Lateral Error: %.2f\n',lateral);
-fprintf('Heading Error: %.2f degrees\n',heading);
-fprintf('Corner Ahead: %d\n',corner);
-fprintf('Circle Found: %d\n',circle);
-fprintf('Circle Offset: %.2f\n',offset);
-fprintf('Line Found: %d\n',line);
+%% TEST 2: Straight line
+BW = false(120,160);
+BW(:,78:82) = true;
 
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
+
+figure;
+imshow(BW);
+title('Test 2: Straight Line');
+
+disp('TEST 2: STRAIGHT LINE');
+disp([lateral_error, heading_error, corner_ahead, ...
+      circle_found, circle_offset, line_found]);
+
+
+%% TEST 3: Diagonal line
+BW = false(120,160);
+
+for r = 1:120
+    c = round(40 + 0.5*r);
+    BW(r,c-2:c+2) = true;
 end
+
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
+
+figure;
+imshow(BW);
+title('Test 3: Diagonal Line');
+
+disp('TEST 3: DIAGONAL LINE');
+disp([lateral_error, heading_error, corner_ahead, ...
+      circle_found, circle_offset, line_found]);
+
+
+%% TEST 4: Curved line
+BW = false(120,160);
+
+for r = 1:120
+    c = round(80 + 0.004*(r-60)^2);
+    BW(r,max(1,c-2):min(160,c+2)) = true;
+end
+
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
+
+figure;
+imshow(BW);
+title('Test 4: Curved Line');
+
+disp('TEST 4: CURVED LINE');
+disp([lateral_error, heading_error, corner_ahead, ...
+      circle_found, circle_offset, line_found]);
+
+
+%% TEST 5: Line with circle
+BW = false(120,160);
+BW(:,48:52) = true;
+
+[X,Y] = meshgrid(1:160,1:120);
+circle = (X-120).^2 + (Y-60).^2 <= 10^2;
+
+BW = BW | circle;
+
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
+
+figure;
+imshow(BW);
+title('Test 5: Line with Circle');
+
+disp('TEST 5: LINE WITH CIRCLE');
+disp([lateral_error, heading_error, corner_ahead, ...
+      circle_found, circle_offset, line_found]);
+
+
+%% TEST 6: No line
+BW = false(120,160);
+
+[lateral_error, heading_error, corner_ahead, ...
+ circle_found, circle_offset, line_found] = B_geometry_v3(BW);
+
+figure;
+imshow(BW);
+title('Test 6: No Line');
+
+disp('TEST 6: NO LINE');
+disp([lateral_error, heading_error, corner_ahead, ...
+      circle_found, circle_offset, line_found]);
 
